@@ -1,0 +1,26 @@
+version: "3.9"
+name: mandatory-services
+services:
+
+  portainer:
+    image: docker.io/portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    privileged: true
+    ports:
+      - "8000:8000"
+      - "9443:9443"
+    volumes:
+      - /run/podman/podman.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+  watchtower:
+    image: docker.io/containrrr/watchtower
+    container_name: watchtower
+    restart: always
+    volumes:
+      - /run/podman/podman.sock:/var/run/docker.sock
+
+
+volumes:
+  portainer_data:
