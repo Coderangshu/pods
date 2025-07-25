@@ -3,7 +3,7 @@ name: mandatory-services
 services:
 
   portainer:
-    image: docker.io/portainer/portainer-ce:latest
+    image: docker.io/portainer/portainer-ce:sts
     container_name: portainer
     restart: always
     privileged: true

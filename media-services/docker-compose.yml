@@ -255,5 +255,5 @@ volumes:
   # cleanmyarr-config:
 
 networks:
-  medianet: {}
-    # external: true
+  medianet: 
+    external: true
