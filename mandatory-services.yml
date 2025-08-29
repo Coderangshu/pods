@@ -12,7 +12,7 @@ services:
       - "8000:8000"
       - "9443:9443"
     volumes:
-      - /run/podman/podman.sock:/var/run/docker.sock
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
       - portainer_data:/data
 
   watchtower:
@@ -20,9 +20,9 @@ services:
     container_name: watchtower
     restart: unless-stopped
     volumes:
-      - /run/podman/podman.sock:/var/run/docker.sock
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
     command: --interval 120
-
 
 volumes:
   portainer_data:
+

@@ -1,0 +1,144 @@
+version: "3.9"
+name: media-stack
+
+x-environment-common: &env_common
+  - PUID=1000
+  - PGID=1000
+  - TZ=UTC
+
+services:
+
+  vpn:
+    profiles: ["vpn"]
+    container_name: vpn
+    image: docker.io/qmcgaw/gluetun:latest
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER:-nordvpn}
+      - OPENVPN_USER=${OPENVPN_USER:-""}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD:-""}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES:-Switzerland}
+    networks:
+      - medianet
+    restart: unless-stopped
+
+  qbittorrent:
+    profiles: ["vpn", "no-vpn"]
+    container_name: qbittorrent
+    image: lscr.io/linuxserver/qbittorrent:latest
+    environment: *env_common
+      - WEBUI_PORT=5080
+    volumes:
+      - qbittorrent-config:/config
+      - torrent-downloads:/downloads
+    networks:
+      - medianet
+    ports:
+      - 5080:5080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+
+  radarr:
+    profiles: ["vpn", "no-vpn"]
+    container_name: radarr
+    image: lscr.io/linuxserver/radarr:latest
+    environment: *env_common
+    networks:
+      - medianet
+    volumes:
+      - radarr-config:/config
+      - torrent-downloads:/downloads
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+
+  sonarr:
+    profiles: ["vpn", "no-vpn"]
+    container_name: sonarr
+    image: lscr.io/linuxserver/sonarr:latest
+    environment: *env_common
+    networks:
+      - medianet
+    volumes:
+      - sonarr-config:/config
+      - torrent-downloads:/downloads
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+
+  prowlarr:
+    profiles: ["vpn", "no-vpn"]
+    container_name: prowlarr
+    image: lscr.io/linuxserver/prowlarr:latest
+    environment: *env_common
+    networks:
+      - medianet
+    volumes:
+      - prowlarr-config:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+
+  recommendarr:
+    profiles: ["recommendarr"]
+    container_name: recommendarr
+    image: docker.io/tannermiddleton/recommendarr:latest
+    environment:
+      - NODE_ENV=production
+      - DOCKER_ENV=true
+      - PORT=6969
+      - PUBLIC_URL=${PUBLIC_URL:-https://localhost:3001}
+    networks:
+      - medianet
+    volumes:
+      - recommendarr-data:/app/server/data
+    ports:
+      - 3001:6969
+    restart: unless-stopped
+
+  jellyseerr:
+    profiles: ["vpn", "no-vpn"]
+    container_name: jellyseerr
+    image: docker.io/fallenbagel/jellyseerr:latest
+    environment: *env_common
+    networks:
+      - medianet
+    volumes:
+      - jellyseerr-config:/app/config
+    ports:
+      - 5055:5055
+    restart: unless-stopped
+
+  jellyfin:
+    profiles: ["vpn", "no-vpn"]
+    container_name: jellyfin
+    image: lscr.io/linuxserver/jellyfin:latest
+    environment: *env_common
+    networks:
+      - medianet
+    volumes:
+      - jellyfin-config:/config
+      - torrent-downloads:/data
+    ports:
+      - 8096:8096
+      - 7359:7359/udp
+      - 8920:8920
+    restart: unless-stopped
+
+volumes:
+  torrent-downloads:
+  radarr-config:
+  sonarr-config:
+  prowlarr-config:
+  jellyfin-config:
+  qbittorrent-config:
+  jellyseerr-config:
+  recommendarr-data:
+
+networks:
+  medianet:
+    external: true
